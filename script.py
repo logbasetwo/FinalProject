@@ -70,11 +70,11 @@ def process_packet(packet):
         ip = packet[IP].src
         # get the request method
         method = packet[HTTPRequest].Method.decode()
-        print("\n{GREEN}[+] {ip} Requested {url} with {method}{RESET}")
+        print("\n{GREEN}[+] ", ip, "Requested ", url, " with ", method")
         if show_raw and packet.haslayer(Raw) and method == "POST":
             # if show_raw flag is enabled, has raw data, and the requested method is "POST"
             # then show raw
-            print("\n{RED}[*] Some useful Raw data: {packet[Raw].load}{RESET}")
+            print("\n{RED}[*] Some useful Raw data: ", packet[Raw].load")
     
             
 def mitm():
